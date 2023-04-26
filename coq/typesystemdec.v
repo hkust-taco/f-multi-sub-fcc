@@ -1,8 +1,10 @@
-Require Import Omega.
+Require Import Lia.
 Require Import Bool.
 
 Require Import mxx.
 Require Import typesystem.
+
+Require Import Arith.
 
 Definition obj_dec : forall (o1 o2 : obj), {o1 = o2} + {o1 <> o2}.
 Proof.
@@ -237,7 +239,7 @@ exists KOne; reflexivity.
 exists (KProd x0 x); reflexivity.
 exists (KRes x0 x); reflexivity.
 { apply eq_sym, negb_sym, beq_nat_false_iff in H0.
-  destruct (lt_eq_lt_dec a x) as [[?|?]|?]; [|exfalso; omega|].
+  destruct (lt_eq_lt_dec a x) as [[?|?]|?]; [|exfalso; lia|].
   - destruct x; [inversion l|].
     exists (TVar x); simpl; subst_lift_var.
   - exists (TVar x); simpl; subst_lift_var. }
@@ -396,7 +398,7 @@ Definition get_jrec a t rec : option (jrec a t rec) :=
 (*     pose proof (beq_nat_false a x (eq_sym Heqy)). *)
 (*     destruct (le_gt_dec a x). *)
 (*     (* +1: a < x *) *)
-(*       destruct x as [|x]; [exfalso; omega|]. *)
+(*       destruct x as [|x]; [exfalso; lia|]. *)
 (*       apply RECcst with (TVar x); simpl. *)
 (*       subst_lift_var. *)
 (*     (* +0: a > x *) *)
@@ -434,12 +436,12 @@ Definition get_jrec a t rec : option (jrec a t rec) :=
 (*   (* +1: *) *)
 (*     inversion H; clear H; subst. *)
 (*     destruct s; inversion H0; clear H0. *)
-(*     exfalso; destruct (le_gt_dec a x); omega. *)
+(*     exfalso; destruct (le_gt_dec a x); lia. *)
 (*   (* +0: *) *)
 (*     inversion H; clear H; subst. *)
 (*     inversion H0; clear H0; subst. *)
 (*     destruct s; inversion H; clear H. *)
-(*     exfalso; destruct (le_gt_dec a x); omega. *)
+(*     exfalso; destruct (le_gt_dec a x); lia. *)
 (* (* 9: RECArr *) *)
 (*   exists WF; split; auto. *)
 (*   intros. *)

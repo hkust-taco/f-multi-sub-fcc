@@ -1,11 +1,12 @@
 Require Import Inclusion. (* wf_incl *)
 Require Import Inverse_Image. (* wf_inverse_image *)
 Require Import Wf_nat.
-Require Import Omega.
+Require Import Lia.
 Require Import Min.
 
 Require Import minmax.
 Require Import Flanguage.
+Require Import Arith.
 
 (** * Strong normalization of the untyped Indexed Calculus *)
 

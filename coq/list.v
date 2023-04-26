@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import List.
 
 Require Import ext.
@@ -57,7 +57,7 @@ induction n.
 (* 1: 1+ *)
   destruct IHn as [xs [? ?]].
   exists (cons a xs).
-  split; simpl; try omega.
+  split; simpl; try lia.
   intros i; destruct i; auto.
 Qed.
 
@@ -66,7 +66,7 @@ Proof.
 induction d; destruct h; simpl; intros; auto.
 inversion H.
 apply IHd.
-omega.
+lia.
 Qed.
 
 Lemma skipn_app_length : forall A (h2 h1 : list A),

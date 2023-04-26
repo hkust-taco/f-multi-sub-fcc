@@ -1,6 +1,7 @@
-Require Import Omega.
+Require Import Lia.
 Require Import Min.
 Require Import Max.
+Require Import Arith.
 
 (** This file defines a tactic [minmax] to help with arithmetic
 involving [min] and [max].
@@ -20,7 +21,7 @@ Proof. intros; apply le_trans with (m := m); auto; apply le_max_l. Qed.
 
 Ltac minmax :=
   repeat (apply min_glb || apply max_lub);
-  let rec aux := omega || (apply le_n_S; aux)
+  let rec aux := lia || (apply le_n_S; aux)
                        || (apply le_min_l'; aux) || (apply le_min_r'; aux)
                        || (apply le_max_l'; aux) || (apply le_max_r'; aux)
   in aux.

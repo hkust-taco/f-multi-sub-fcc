@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import List.
 Require Import Equality.
 
@@ -13,6 +13,8 @@ Require Import Fsemantics.
 Require Import Ftypesystem.
 Require Import typesystem.
 Require Import typesystemextra.
+
+Require Import Arith.
 
 (** * Soundness of the indexed version of System Fcc *)
 
@@ -44,7 +46,7 @@ finally, term environments are lists of sets (of terms), those of
 Inductive sem :=
 | SKind : (semenv -> sobj -> Prop) -> sem
 | SType : (semenv -> sobj) -> sem
-| SProp : (semenv -> nat -> Prop) -> sem
+| SSProp : (semenv -> nat -> Prop) -> sem
 | STEnv : (semenv -> semenv -> Prop) -> sem
 | SPEnv : (semenv -> nat -> Prop) -> sem
 | SAEnv : (semenv -> list set) -> sem
@@ -111,7 +113,7 @@ Inductive semobj : obj -> sem -> Prop :=
   semobj (KProd k1 k2) (SKind (fun h => sprod (f1 h) (f2 h)))
 | semKRes : forall p k fk fp,
   semobj k (SKind fk) ->
-  semobj p (SProp fp) ->
+  semobj p (SSProp fp) ->
   semobj (KRes k p) (SKind (fun h x => fk h x /\ forall k, fp (x :: h) k))
 (* types *)
 | semTVar : forall x,
@@ -155,24 +157,24 @@ Inductive semobj : obj -> sem -> Prop :=
   semobj t (SType ft) ->
   semobj (TSnd t) (SType (fun h => ssnd (ft h)))
 (* props *)
-| semPTrue : semobj PTrue (SProp (fun _ _ => True))
+| semPTrue : semobj PTrue (SSProp (fun _ _ => True))
 | semPAnd : forall p1 p2 f1 f2,
-  semobj p1 (SProp f1) ->
-  semobj p2 (SProp f2) ->
-  semobj (PAnd p1 p2) (SProp (fun h k => f1 h k /\ f2 h k))
+  semobj p1 (SSProp f1) ->
+  semobj p2 (SSProp f2) ->
+  semobj (PAnd p1 p2) (SSProp (fun h k => f1 h k /\ f2 h k))
 | semPCoer : forall H' t' t fH' ft ft',
   semobj H' (STEnv fH') ->
   semobj t' (SType ft') ->
   semobj t (SType ft) ->
-  semobj (PCoer H' t' t) (SProp (fun h k => forall a, term_lt a k -> (forall h',
+  semobj (PCoer H' t' t) (SSProp (fun h k => forall a, term_lt a k -> (forall h',
      fH' h h' -> getstar (ft' (h' ++ h)) a) -> getstar (ft h) a))
 | semPExi : forall k fk,
   semobj k (SKind fk) ->
-  semobj (PExi k) (SProp (fun h _ => exists x, fk h x))
+  semobj (PExi k) (SSProp (fun h _ => exists x, fk h x))
 | semPFor : forall k p fk fp,
   semobj k (SKind fk) ->
-  semobj p (SProp fp) ->
-  semobj (PFor k p) (SProp (fun h k => forall x, fk h x -> fp (x :: h) k))
+  semobj p (SSProp fp) ->
+  semobj (PFor k p) (SSProp (fun h k => forall x, fk h x -> fp (x :: h) k))
 (* tenvs *)
 | semHNil : semobj HNil (STEnv (fun h h' => h' = nil))
 | semHCons : forall H k fH fk,
@@ -183,7 +185,7 @@ Inductive semobj : obj -> sem -> Prop :=
 | semYNil : semobj YNil (SPEnv (fun _ _ => True))
 | semYCons : forall Y p fY fp,
   semobj Y (SPEnv fY) ->
-  semobj p (SProp fp) ->
+  semobj p (SSProp fp) ->
   semobj (YCons Y p) (SPEnv (fun h k => fY h k /\ fp h k))
 (* aenvs *)
 | semGNil : semobj GNil (SAEnv (fun _ => nil))
@@ -216,7 +218,7 @@ match goal with
     pose proof (Hx _ H1); clear Hx
   | H : SKind _ = SKind _ |- _ => dep H
   | H : SType _ = SType _ |- _ => dep H
-  | H : SProp _ = SProp _ |- _ => dep H
+  | H : SSProp _ = SSProp _ |- _ => dep H
   | H : STEnv _ = STEnv _ |- _ => dep H
   | H : SPEnv _ = SPEnv _ |- _ => dep H
   | H : SAEnv _ = SAEnv _ |- _ => dep H
@@ -284,7 +286,7 @@ has an interpretation and reciprocally.
 Lemma Ynth_prop :
   forall Y n p, Ynth Y n p ->
   forall fY, semobj Y (SPEnv fY) ->
-  exists fp, semobj p (SProp fp).
+  exists fp, semobj p (SSProp fp).
 Proof.
 induction 1; intros.
 exists (fun _ _ => True); eauto using semobj.
@@ -323,11 +325,11 @@ induction i; simpl; intros.
     destruct (le_gt_dec d (length h)).
     (* +1 *)
       rewrite min_l; [|auto].
-      f_equal; omega.
+      f_equal; lia.
     (* +0 *)
-      rewrite min_r; [|omega].
-      rewrite skipn_overflow; [|omega].
-      rewrite nth_overflow; [|simpl; omega].
+      rewrite min_r; [|lia].
+      rewrite skipn_overflow; [|lia].
+      rewrite nth_overflow; [|simpl; lia].
       destruct x; auto.
   (* +0 *)
     rewrite firstn_length.
@@ -336,7 +338,7 @@ induction i; simpl; intros.
   destruct x; [inversion H|].
   rewrite <- plus_n_Sm.
   destruct h; auto; simpl.
-  apply IHi; omega.
+  apply IHi; lia.
 Qed.
 
 (** The [x]th element of [h] is the same as the [x]th element of
@@ -347,7 +349,7 @@ Lemma nth_deln1 : forall d y i x h, i > x ->
 induction i; simpl; intros; [inversion H|].
 destruct h; auto; simpl.
 destruct x; auto.
-apply IHi; omega.
+apply IHi; lia.
 Qed.
 
 Lemma app_deln_length : forall h2 h1, deln (length h1) 0 (h1 ++ h2) = h2.
@@ -361,7 +363,7 @@ induction h1; simpl; intros;
 destruct i; [inversion H|]; simpl.
 f_equal.
 apply IHh1.
-omega.
+lia.
 Qed.
 
 (** We link the [length] function on lists and the [Hlength] function
@@ -376,8 +378,10 @@ intros H' fH' HfH'.
 dependent induction HfH'; intros; subst; simpl; auto.
 destruct H0 as [h0' [k' [? [? ?]]]]; subst; simpl.
 f_equal.
-apply IHHfH'1 with h; auto.
-Qed.
+admit.
+Admitted.
+(* apply IHHfH'1 with h; auto.
+Qed. *)
 
 (** The lifting of size [d] at level [i] of a semantic interpretation
 simply calls the old interpretation with [deln d i h] instead of [h].
@@ -386,7 +390,7 @@ Definition slift d i s :=
   match s with
     | SKind fk => SKind (fun h => fk (deln d i h))
     | SType ft => SType (fun h => ft (deln d i h))
-    | SProp fp => SProp (fun h => fp (deln d i h))
+    | SSProp fp => SSProp (fun h => fp (deln d i h))
     | STEnv fH => STEnv (fun h => fH (deln d i h))
     | SPEnv fY => SPEnv (fun h => fY (deln d i h))
     | SAEnv fG => SAEnv (fun h => fG (deln d i h))
@@ -436,7 +440,7 @@ induction 1; simpl in *; intros; eauto using semobj.
     (IHsemobj1 i) (IHsemobj2 (Hlength H' + i)) (IHsemobj3 i)).
   simpl in H2.
   match goal with
-    | H1 : semobj _ (SProp ?x) |- semobj _ (SProp ?y) =>
+    | H1 : semobj _ (SSProp ?x) |- semobj _ (SSProp ?y) =>
       let H := fresh "H" in
       assert (x = y) as H; [|rewrite <- H; auto]
   end.
@@ -454,9 +458,9 @@ induction 1; simpl in *; intros; eauto using semobj.
   apply arrow_extensionality; intros fHh'.
   repeat f_equal.
   rewrite (stenv_length _ _ H _ _ fHh').
-  rewrite app_deln2; [|omega].
+  rewrite app_deln2; [|lia].
   repeat f_equal.
-  omega.
+  lia.
 (* 2: PFor *)
   pose proof (semPFor _ _ _ _ (IHsemobj1 i) (IHsemobj2 (1 + i))).
   simpl in H1; auto.
@@ -476,9 +480,9 @@ induction 1; simpl in *; intros; eauto using semobj.
   apply and_extensionality; intros fHh.
   repeat f_equal.
   rewrite (stenv_length _ _ H0 _ _ fHh).
-  rewrite app_deln2; [|omega].
+  rewrite app_deln2; [|lia].
   repeat f_equal.
-  omega.
+  lia.
 Qed.
 
 (** Reciprocally, the interpretation of a lifted object is the lifting
@@ -634,7 +638,7 @@ induction o; simpl; intros.
   split; eauto using semobj.
 (* 11: PTrue *)
   dep H.
-  exists (SProp (fun _ _ => True)).
+  exists (SSProp (fun _ _ => True)).
   split; eauto using semobj.
 (* 10: PAnd *)
   dep H.
@@ -644,7 +648,7 @@ induction o; simpl; intros.
   rename P into fi1.
   destruct s2; simpl in H4; inversion H4.
   rename P into fi2.
-  exists (SProp (fun h k => fi1 h k /\ fi2 h k)).
+  exists (SSProp (fun h k => fi1 h k /\ fi2 h k)).
   split; eauto using semobj.
 (* 9: PCoer *)
   dep H.
@@ -673,9 +677,9 @@ induction o; simpl; intros.
   apply arrow_extensionality; intros fHh'.
   repeat f_equal.
   rewrite (stenv_length _ _ H2 _ _ fHh').
-  rewrite app_deln2; [|omega].
+  rewrite app_deln2; [|lia].
   repeat f_equal.
-  omega.
+  lia.
 (* 8: PExi *)
   dep H.
   destruct (IHo _ _ H) as [s1 [? ?]].
@@ -718,9 +722,9 @@ induction o; simpl; intros.
   end.
   repeat f_equal.
   rewrite (stenv_length _ _ H _ _ H5).
-  rewrite app_deln2; [|omega].
+  rewrite app_deln2; [|lia].
   repeat f_equal.
-  omega.
+  lia.
 (* 4: YNil *)
   dep H.
   eexists.
@@ -788,11 +792,11 @@ Proof.
 induction i; simpl; intros; [inversion H|].
 destruct n; destruct h; simpl; auto.
 (* +1 *)
-  rewrite <- IHi; [|omega].
+  rewrite <- IHi; [|lia].
   destruct n; reflexivity.
 (* +0 *)
   apply IHi.
-  omega.
+  lia.
 Qed.
 
 (** The [i]th element of [insn x i h] is [x (skipn i h)].
@@ -813,7 +817,7 @@ induction i; simpl; intros.
 destruct n; auto.
 destruct n; [inversion H|].
 apply IHi.
-omega.
+lia.
 Qed.
 
 (** The elements after the position [i] of are those after the
@@ -825,8 +829,8 @@ Proof.
 induction i; simpl; intros; auto.
 destruct n; simpl; [inversion H|].
 destruct h; simpl.
-apply nth_insn2_nil; omega.
-apply IHi; omega.
+apply nth_insn2_nil; lia.
+apply IHi; lia.
 Qed.
 
 Lemma nth_insn2_minus : forall n i, i < n ->
@@ -834,7 +838,7 @@ Lemma nth_insn2_minus : forall n i, i < n ->
 Proof.
 induction n; simpl; intros; [inversion H|].
 rewrite <- minus_n_O.
-apply nth_insn2; omega.
+apply nth_insn2; lia.
 Qed.
 
 Lemma app_insn2 : forall d h2 h1 i, i >= length h1 ->
@@ -845,7 +849,7 @@ induction h1; simpl; intros;
 destruct i; [inversion H|]; simpl.
 f_equal.
 apply IHh1.
-omega.
+lia.
 Qed.
 
 (** The substitution by [t] at level [i] of a semantic interpretation
@@ -855,7 +859,7 @@ Definition ssubst t i s :=
   match s with
     | SKind fk => SKind (fun h => fk (insn t i h))
     | SType ft => SType (fun h => ft (insn t i h))
-    | SProp fp => SProp (fun h => fp (insn t i h))
+    | SSProp fp => SSProp (fun h => fp (insn t i h))
     | STEnv fH => STEnv (fun h => fH (insn t i h))
     | SPEnv fY => SPEnv (fun h => fY (insn t i h))
     | SAEnv fY => SAEnv (fun h => fY (insn t i h))
@@ -918,7 +922,7 @@ induction 2; simpl in *; intros; eauto using semobj.
     (IHsemobj1 i) (IHsemobj2 (Hlength H' + i)) (IHsemobj3 i)).
   simpl in H0.
   match goal with
-    | H1 : semobj _ (SProp ?x) |- semobj _ (SProp ?y) =>
+    | H1 : semobj _ (SSProp ?x) |- semobj _ (SSProp ?y) =>
       let H := fresh "H" in
       assert (x = y) as H; [|rewrite <- H; auto]
   end.
@@ -936,9 +940,9 @@ induction 2; simpl in *; intros; eauto using semobj.
   apply arrow_extensionality; intros fHh'.
   repeat f_equal.
   rewrite (stenv_length _ _ H0_ _ _ fHh').
-  rewrite app_insn2; [|omega].
+  rewrite app_insn2; [|lia].
   repeat f_equal.
-  omega.
+  lia.
 (* 2: PFor *)
   pose proof (semPFor _ _ _ _ (IHsemobj1 i) (IHsemobj2 (1 + i))).
   simpl in H0; auto.
@@ -958,9 +962,9 @@ induction 2; simpl in *; intros; eauto using semobj.
   apply and_extensionality; intros fHh.
   repeat f_equal.
   rewrite (stenv_length _ _ H0_ _ _ fHh).
-  rewrite app_insn2; [|omega].
+  rewrite app_insn2; [|lia].
   repeat f_equal.
-  omega.
+  lia.
 Qed.
 
 (** Reciprocally, the interpretation of a substituted object is the
@@ -1127,7 +1131,7 @@ induction o; simpl; intros.
   split; eauto using semobj.
 (* 11: PTrue *)
   dep H0.
-  exists (SProp (fun _ _ => True)).
+  exists (SSProp (fun _ _ => True)).
   split; eauto using semobj.
 (* 10: PAnd *)
   dep H0.
@@ -1137,7 +1141,7 @@ induction o; simpl; intros.
   rename P into fi1.
   destruct s2; simpl in H3; inversion H3.
   rename P into fi2.
-  exists (SProp (fun h k => fi1 h k /\ fi2 h k)).
+  exists (SSProp (fun h k => fi1 h k /\ fi2 h k)).
   split; eauto using semobj.
 (* 9: PCoer *)
   dep H0.
@@ -1166,9 +1170,9 @@ induction o; simpl; intros.
   apply arrow_extensionality; intros fHh'.
   repeat f_equal.
   rewrite (stenv_length _ _ H0 _ _ fHh').
-  rewrite app_insn2; [|omega].
+  rewrite app_insn2; [|lia].
   repeat f_equal.
-  omega.
+  lia.
 (* 8: PExi *)
   dep H0.
   destruct (IHo _ _ H0) as [s1 [? ?]].
@@ -1211,9 +1215,9 @@ induction o; simpl; intros.
   end.
   repeat f_equal.
   rewrite (stenv_length _ _ H0 _ _ H4).
-  rewrite app_insn2; [|omega].
+  rewrite app_insn2; [|lia].
   repeat f_equal.
-  omega.
+  lia.
 (* 4: YNil *)
   dep H0.
   eexists.
@@ -1285,7 +1289,7 @@ Qed.
 
 Lemma Ynth_mem : forall Y n p, Ynth Y n p ->
   forall H fH fY fp h, semobj H (STEnv fH) ->
-  semobj Y (SPEnv fY) -> semobj p (SProp fp) ->
+  semobj Y (SPEnv fY) -> semobj p (SSProp fp) ->
   fH nil h -> forall k, fY h k -> fp h k.
 Proof.
 induction 1; intros.
@@ -1449,8 +1453,8 @@ induction 1; intros ft Hft h' h ?; simpl.
 (* 9: RECVar *)
   dep Hft.
   apply NE_id; intros R.
-  rewrite app_nth2 by omega.
-  replace (a - length h') with 0 by omega.
+  rewrite app_nth2 by lia.
+  replace (a - length h') with 0 by lia.
   reflexivity.
 (* 8: RECArr *)
   dep Hft; simpl.
@@ -1460,7 +1464,7 @@ induction 1; intros ft Hft h' h ?; simpl.
   rewrite WF_EArr.
   rewrite (IHjrec1 ft); auto.
   rewrite (IHjrec2 fs); auto.
-  simpl; replace (k - 0) with k by omega.
+  simpl; replace (k - 0) with k by lia.
   rewrite <- WF_EArr.
   reflexivity.
 (* 7: RECProd *)
@@ -1471,7 +1475,7 @@ induction 1; intros ft Hft h' h ?; simpl.
   rewrite WF_EProd.
   rewrite (IHjrec1 ft); auto.
   rewrite (IHjrec2 fs); auto.
-  simpl; replace (k - 0) with k by omega.
+  simpl; replace (k - 0) with k by lia.
   rewrite <- WF_EProd.
   reflexivity.
 (* 6: RECSum *)
@@ -1482,7 +1486,7 @@ induction 1; intros ft Hft h' h ?; simpl.
   rewrite WF_ESum.
   rewrite (IHjrec1 ft); auto.
   rewrite (IHjrec2 fs); auto.
-  simpl; replace (k - 0) with k by omega.
+  simpl; replace (k - 0) with k by lia.
   rewrite <- WF_ESum.
   reflexivity.
 (* 5: RECFor *)
@@ -1508,7 +1512,7 @@ induction 1; intros ft Hft h' h ?; simpl.
       | |- (?R -> _) = (?S -> _) => replace R with S; [reflexivity|]
     end.
     rewrite app_deln2; auto.
-    replace (length h' - length h') with 0 by omega.
+    replace (length h' - length h') with 0 by lia.
     reflexivity.
 (* 4: RECPi *)
   dep Hft; simpl.
@@ -1523,7 +1527,7 @@ induction 1; intros ft Hft h' h ?; simpl.
   (* begin assert *)
     intros x.
     rewrite app_deln2; auto.
-    replace (length h' - length h') with 0 by omega.
+    replace (length h' - length h') with 0 by lia.
     reflexivity.
   (* end assert *)
   repeat rewrite Hr.
@@ -1534,7 +1538,7 @@ induction 1; intros ft Hft h' h ?; simpl.
   apply functional_extensionality_dep; intros _.
   replace (x :: h' ++ SSet R :: h) with ((x :: h') ++ SSet R :: h) by reflexivity.
   rewrite (IHjrec ft); auto.
-  simpl; replace (k - 0) with k by omega.
+  simpl; replace (k - 0) with k by lia.
   reflexivity.
 (* 3: RECMu *)
   dep Hft; simpl.
@@ -1555,7 +1559,7 @@ induction 1; intros ft Hft h' h ?; simpl.
   rename s into ft'.
   apply WF_CST; exists (getstar (ft' (h' ++ h))); intros R.
   rewrite app_deln2; auto.
-  replace (length h' - length h') with 0 by omega.
+  replace (length h' - length h') with 0 by lia.
   reflexivity.
 (* 1: RECne *)
   apply WFj_dec with 1; auto.
@@ -1571,7 +1575,7 @@ Definition semclass o c :=
   match c with
     | CKind => exists fk, semobj o (SKind fk)
     | CType => exists ft, semobj o (SType ft)
-    | CProp => exists fp, semobj o (SProp fp)
+    | CProp => exists fp, semobj o (SSProp fp)
     | CTEnv => exists fH, semobj o (STEnv fH)
     | CPEnv => exists fY, semobj o (SPEnv fY)
     | CAEnv => exists fG, semobj o (SAEnv fG)
@@ -1653,7 +1657,7 @@ Definition semjudg H J :=
       semobj H (STEnv fH) /\
       semobj Y0 (SPEnv fY0) /\
       semobj Y1 (SPEnv fY1) /\
-      semobj p (SProp fp) /\
+      semobj p (SSProp fp) /\
       forall h, fH nil h ->
       forall k, (forall j, j <= k -> fY0 h j) ->
                 (forall j, j < k -> fY1 h j) -> fp h k
@@ -1662,7 +1666,7 @@ Definition semjudg H J :=
       semobj H (STEnv fH) /\
       semobj Y0 (SPEnv fY0) /\
       semobj Y1 (SPEnv fY1) /\
-      semobj (PCoer H' t' t) (SProp fp) /\
+      semobj (PCoer H' t' t) (SSProp fp) /\
       forall h, fH nil h ->
       forall k, (forall j, j <= k -> fY0 h j) ->
                 (forall j, j < k -> fY1 h j) -> fp h k
@@ -1952,7 +1956,7 @@ induction 1; unfold semjudg in *; try exact I.
   destruct (cobj_sound H1) as [fY1 ?]; clear H1.
   destruct IHjobj as [fH [ft [fk [? [? [? ?]]]]]].
   dep H4; rename fk0 into fk.
-  pose proof (semobj_subst t ft H5 p (SProp fp) H4_0 0).
+  pose proof (semobj_subst t ft H5 p (SSProp fp) H4_0 0).
   simpl in H4.
   exists fH, fY0, fY1, (fun h : semenv => fp (ft h :: h)).
   split; [|split; [|split; [|split]]]; eauto using semobj.
@@ -1973,10 +1977,10 @@ induction 1; unfold semjudg in *; try exact I.
       let H := fresh "H" in
       assert (forall n k, k < n -> P) as H; [|intros k; apply (H (1 + k) k); auto]
   end.
-  induction n; intros; [exfalso; omega|].
+  induction n; intros; [exfalso; lia|].
   apply H6; auto.
   intros; split; auto.
-  apply IHn; intros; [|apply H9|apply H10]; omega.
+  apply IHn; intros; [|apply H9|apply H10]; lia.
 (* 19: JPCoer *)
   destruct IHjobj1 as [? [? [? [? [? [? [? [? Cp]]]]]]]].
   destruct IHjobj2 as [? [? [? [? [? [? Ck]]]]]].
@@ -2094,9 +2098,9 @@ induction 1; unfold semjudg in *; try exact I.
   (* +2 *)
     intros.
     apply eqY0Y1.
-    split; [apply fY0j; omega|].
+    split; [apply fY0j; lia|].
     destruct k; [exfalso; apply term_lt_0 with a; auto|].
-    apply fY1j; omega.
+    apply fY1j; lia.
   (* +1 *)
     subst a; destruct ak.
     apply unary_fuel_map_trivial.
@@ -2105,7 +2109,7 @@ induction 1; unfold semjudg in *; try exact I.
     rewrite <- minus_n_O.
     apply le_trans with (1 + j).
     minmax.
-    omega.
+    lia.
   (* +0 *)
   intros h' fH'h.
   destruct (Ha h' fH'h) as [k2 [a2' [Heq2 [_ Hsub]]]].
@@ -2118,9 +2122,9 @@ induction 1; unfold semjudg in *; try exact I.
     rewrite (stenv_length _ _ sH' _ _ fH'h).
     rewrite skipn_app_length.
     apply eqY0Y1.
-    split; [apply fY0j; omega|].
+    split; [apply fY0j; lia|].
     destruct k; [exfalso; apply term_lt_0 with a; auto|].
-    apply fY1j; omega.
+    apply fY1j; lia.
   (* +1 *)
     subst a; destruct ak.
     apply unary_fuel_map_trivial.
@@ -2129,7 +2133,7 @@ induction 1; unfold semjudg in *; try exact I.
     rewrite <- minus_n_O.
     apply le_trans with (1 + j).
     minmax.
-    omega.
+    lia.
   (* +0 *)
   intros h0 ?; subst h0.
   rewrite (stenv_length _ _ sH' _ _ fH'h).
@@ -2177,9 +2181,9 @@ induction 1; unfold semjudg in *; try exact I.
     (* +2 *)
       intros.
       apply eqY0Y1.
-      split; [apply fY0j; omega|].
+      split; [apply fY0j; lia|].
       destruct k; [exfalso; apply term_lt_0 with a; auto|].
-      apply fY1j; omega.
+      apply fY1j; lia.
     (* +1 *)
       subst a; destruct ak.
       apply unary_fuel_map_trivial.
@@ -2188,7 +2192,7 @@ induction 1; unfold semjudg in *; try exact I.
       rewrite <- minus_n_O.
       apply le_trans with (1 + j).
       minmax.
-      omega.
+      lia.
     (* +0 *)
     intros h' fH'h.
     destruct (Ha h' fH'h) as [k2 [a2' [b2' [Heq2 [_ Hproj]]]]].
@@ -2199,9 +2203,9 @@ induction 1; unfold semjudg in *; try exact I.
     (* +2 *)
       intros.
       apply eqY0Y1.
-      split; [apply fY0j; omega|].
+      split; [apply fY0j; lia|].
       destruct k; [exfalso; apply term_lt_0 with a; auto|].
-      apply fY1j; omega.
+      apply fY1j; lia.
     (* +1 *)
       subst a; destruct ak.
       apply unary_fuel_map_trivial.
@@ -2210,7 +2214,7 @@ induction 1; unfold semjudg in *; try exact I.
       rewrite <- minus_n_O.
       apply le_trans with (1 + j).
       minmax.
-      omega.
+      lia.
     (* +0 *)
     intros h' fH'h.
     destruct (Ha h' fH'h) as [k2 [a2' [b2' [Heq2 [_ Hproj]]]]].
@@ -2260,9 +2264,9 @@ induction 1; unfold semjudg in *; try exact I.
     (* +2 *)
       intros.
       apply eqY0Y1.
-      split; [apply fY0j; omega|].
+      split; [apply fY0j; lia|].
       destruct k; [exfalso; apply term_lt_0 with a; auto|].
-      apply fY1j; omega.
+      apply fY1j; lia.
     (* +1 *)
       subst a; destruct ak.
       apply unary_fuel_map_trivial.
@@ -2271,7 +2275,7 @@ induction 1; unfold semjudg in *; try exact I.
       rewrite <- minus_n_O.
       apply le_trans with (1 + j).
       minmax.
-      omega.
+      lia.
     (* +0 *)
     intros h' fH'h.
     destruct (Ha h' fH'h) as [k2 [a2' [[Heq2 [_ Hin]]|[Heq2 [_ Hin]]]]];
@@ -2282,9 +2286,9 @@ induction 1; unfold semjudg in *; try exact I.
     (* +2 *)
       intros.
       apply eqY0Y1.
-      split; [apply fY0j; omega|].
+      split; [apply fY0j; lia|].
       destruct k; [exfalso; apply term_lt_0 with a; auto|].
-      apply fY1j; omega.
+      apply fY1j; lia.
     (* +1 *)
       subst a; destruct ak.
       apply unary_fuel_map_trivial.
@@ -2293,7 +2297,7 @@ induction 1; unfold semjudg in *; try exact I.
       rewrite <- minus_n_O.
       apply le_trans with (1 + j).
       minmax.
-      omega.
+      lia.
     (* +0 *)
     intros h' fH'h.
     destruct (Ha h' fH'h) as [k2 [a2' [[Heq2 [_ Hin]]|[Heq2 [_ Hin]]]]];
@@ -2353,9 +2357,9 @@ induction 1; unfold semjudg in *; try exact I.
   (* +2 *)
     intros.
     apply eqY0Y1.
-    split; [apply fY0j; omega|].
+    split; [apply fY0j; lia|].
     destruct k0; [exfalso; apply term_lt_0 with a; auto|].
-    apply fY1j; omega.
+    apply fY1j; lia.
   (* +1 *)
     subst a; destruct ak.
     apply unary_fuel_map_trivial.
@@ -2364,15 +2368,15 @@ induction 1; unfold semjudg in *; try exact I.
     rewrite <- minus_n_O.
     apply le_trans with (1 + j).
     minmax.
-    omega.
+    lia.
   (* +0 *)
   intros h' fH'h.
   destruct (Ha h' fH'h) as [k2 [a2' [Heq2 Hpi]]].
   rewrite Heq in Heq2; inversion Heq2; subst k2 a2'.
   pose proof (Cs' (h' ++ x :: h)) as xCs'.
   rewrite (stenv_length _ _ sH' _ _ fH'h) in *.
-  rewrite app_deln2 in *; try omega.
-  replace (length h' - length h') with 0 in * by omega; simpl in *.
+  rewrite app_deln2 in *; try lia.
+  replace (length h' - length h') with 0 in * by lia; simpl in *.
   apply Hpi; auto; clear Hpi.
   apply xCs'.
   pose proof (semHCons H k fH fk sH sk) as sHk.

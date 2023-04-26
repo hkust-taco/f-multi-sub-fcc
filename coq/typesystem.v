@@ -1,10 +1,11 @@
-Require Import Omega.
+Require Import Lia.
 Require Import List.
 Require Import Equality.
 
 Require Import mxx.
 Require Import ext.
 Require Import list.
+Require Import Arith.
 
 (** * System Fcc (common part)
 
@@ -286,9 +287,9 @@ Ltac subst_lift_var := repeat (match goal with
     | |- context[subst_idx] => unfold subst_idx
     | |- context[lift_idx] => unfold lift_idx
     | |- context[lt_eq_lt_dec ?x ?y] =>
-      destruct (lt_eq_lt_dec x y) as [[?|?]|?]; try (exfalso; omega); simpl; auto
+      destruct (lt_eq_lt_dec x y) as [[?|?]|?]; try (exfalso; lia); simpl; auto
     | |- context[le_gt_dec ?x ?y] =>
-      destruct (le_gt_dec x y); try (exfalso; omega); simpl; auto
+      destruct (le_gt_dec x y); try (exfalso; lia); simpl; auto
   end).
 
 Lemma lift_0 : forall t i, lift 0 i t = t.
@@ -321,9 +322,9 @@ repeat match goal with
   | |- context[Hlength (lift ?d ?i ?H)] => rewrite (Hlength_lift d H i)
   | IH : forall i j, _ -> _ -> lift ?d1 j (lift ?d2 i ?a) = _
     |- context[lift ?d1 ?j (lift ?d2 ?i ?a)] =>
-    rewrite (IH i j); [clear IH|omega|omega]
+    rewrite (IH i j); [clear IH|lia|lia]
 end.
-subst_lift_var; f_equal; omega.
+subst_lift_var; f_equal; lia.
 Qed.
 
 Lemma lift_lift : forall d1 d2 a i j, j >= i ->
@@ -335,9 +336,9 @@ repeat match goal with
   | |- context[Hlength (lift ?d ?i ?H)] => rewrite (Hlength_lift d H i)
   | IH : forall i j, _ -> lift ?d1 i (lift ?d2 j ?a) = _
     |- context[lift ?d1 ?i (lift ?d2 ?j ?a)] =>
-    rewrite (IH i j); [clear IH; simpl|omega]
+    rewrite (IH i j); [clear IH; simpl|lia]
 end.
-subst_lift_var; f_equal; omega.
+subst_lift_var; f_equal; lia.
 rewrite plus_assoc; reflexivity.
 rewrite plus_assoc; reflexivity.
 Qed.
@@ -347,8 +348,8 @@ Lemma lift_lift_0 : forall d2 d1 j a,
 Proof.
 intros.
 pose proof (lift_lift d1 d2 a 0 j).
-rewrite H; [|omega].
-f_equal; omega.
+rewrite H; [|lia].
+f_equal; lia.
 Qed.
 
 Lemma lift_shift_0 : forall d i a,
@@ -370,24 +371,24 @@ repeat match goal with
     |- context[ lift ?d (?f (?j + ?i)) (subst ?b (?f ?i) ?a) ] =>
     repeat rewrite plus_n_Sm; rewrite (IH (f i)); clear IH
 end.
-subst_lift_var; subst; [rewrite lift_lift_0|]; f_equal; omega.
+subst_lift_var; subst; [rewrite lift_lift_0|]; f_equal; lia.
 (* *)
   rewrite (Hlength_subst b cb).
   rewrite Hlength_lift.
   pose proof (IHa2 (Hlength a1 + i)).
-  replace (Hlength a1 + (j + i)) with (j + (Hlength a1 + i)) by omega.
+  replace (Hlength a1 + (j + i)) with (j + (Hlength a1 + i)) by lia.
   rewrite H.
   f_equal.
-  replace (j + 1 + (Hlength a1 + i)) with (Hlength a1 + (j + 1 + i)) by omega.
+  replace (j + 1 + (Hlength a1 + i)) with (Hlength a1 + (j + 1 + i)) by lia.
   reflexivity.
 (* *)
   rewrite (Hlength_subst b cb).
   rewrite Hlength_lift.
   pose proof (IHa2 (Hlength a1 + i)).
-  replace (Hlength a1 + (j + i)) with (j + (Hlength a1 + i)) by omega.
+  replace (Hlength a1 + (j + i)) with (j + (Hlength a1 + i)) by lia.
   rewrite H.
   f_equal.
-  replace (j + 1 + (Hlength a1 + i)) with (Hlength a1 + (j + 1 + i)) by omega.
+  replace (j + 1 + (Hlength a1 + i)) with (Hlength a1 + (j + 1 + i)) by lia.
   reflexivity.
 Qed.
 
@@ -397,7 +398,7 @@ Proof.
 intros d i b a cb.
 pose proof (lift_subst1 b cb d i a 0).
 repeat rewrite plus_0_r in H.
-replace (i + 1) with (1 + i) in H by omega.
+replace (i + 1) with (1 + i) in H by lia.
 assumption.
 Qed.
 
@@ -409,7 +410,7 @@ intros b cb.
 induction a; intros i j Hij; simpl; auto;
 repeat match goal with
   | H : ?x |- ?x => exact H
-  | H : ?i >= ?j |- ?f ?i >= ?f ?j => omega
+  | H : ?i >= ?j |- ?f ?i >= ?f ?j => lia
   | |- ?x = ?x => reflexivity
   | IH : forall i j, i >= j -> lift ?d j (subst ?b i ?a) = _
     |- context[ lift ?d ?j (subst ?b ?i ?a) ] =>
@@ -421,15 +422,15 @@ repeat match goal with
   | cb : cobj ?b CType |- context[ Hlength (subst ?b _ _) ] => rewrite (Hlength_subst b cb)
   | |- context[ Hlength (lift _ _ _) ] => rewrite Hlength_lift
 end.
-subst_lift_var; subst; [rewrite lift_fusion; auto|]; f_equal; omega.
+subst_lift_var; subst; [rewrite lift_fusion; auto|]; f_equal; lia.
 (* *)
   f_equal.
   f_equal.
-  omega.
+  lia.
 (* *)
   f_equal.
   f_equal.
-  omega.
+  lia.
 Qed.
 
 Lemma lift_subst2_0 : forall a b i, cobj b CType ->
@@ -437,7 +438,7 @@ Lemma lift_subst2_0 : forall a b i, cobj b CType ->
 Proof.
 intros.
 pose proof (lift_subst2 b H 1 a i 0) as Hx.
-apply Hx; omega.
+apply Hx; lia.
 Qed.
 
 Lemma subst_lift : forall b d a i l, i >= l -> i <= d + l ->
@@ -446,8 +447,8 @@ Proof.
 induction a; intros i l H1 H2; simpl; auto;
 repeat match goal with
   | H : ?x |- ?x => exact H
-  | H : ?i >= ?j |- ?f ?i >= ?f ?j => omega
-  | H : ?i <= ?d + ?l |- ?f ?i <= ?d + ?f ?l => omega
+  | H : ?i >= ?j |- ?f ?i >= ?f ?j => lia
+  | H : ?i <= ?d + ?l |- ?f ?i <= ?d + ?f ?l => lia
   | |- ?x = ?x => reflexivity
   | IH : forall i l, _ -> _ -> subst ?b i (lift (S ?d) l ?a) = _
     |- context[ subst ?b ?i (lift (S ?d) ?l ?a) ] =>
@@ -455,7 +456,7 @@ repeat match goal with
   | |- context[ Hlength (lift _ _ _) ] => rewrite Hlength_lift
 end.
 subst_lift_var.
-f_equal; omega.
+f_equal; lia.
 Qed.
 
 Lemma subst_lift_0 : forall a b, subst b 0 (lift 1 0 a) = a.
@@ -470,7 +471,7 @@ repeat match goal with
   | |- ?x = ?x => reflexivity
   | |- context[ S (?n + ?m) ] => rewrite (plus_n_Sm n m)
   | |- context[ Hlength ?a + (?d + ?i) ] =>
-    replace (Hlength a + (d + i)) with (d + (Hlength a + i)) by omega
+    replace (Hlength a + (d + i)) with (d + (Hlength a + i)) by lia
   | IH : forall i, subst ?bd (?d + i) (subst ?b i ?a) = _
     |- context[ subst ?bd (?d + ?i) (subst ?b ?i ?a) ] =>
     rewrite (IH i); clear IH; simpl
@@ -482,27 +483,27 @@ end.
 subst_lift_var.
 (* *)
   subst.
-  replace (subst bd d) with (subst bd (d + 0)) by (f_equal; omega).
-  rewrite lift_subst2; [|auto|omega].
-  f_equal; omega.
+  replace (subst bd d) with (subst bd (d + 0)) by (f_equal; lia).
+  rewrite lift_subst2; [|auto|lia].
+  f_equal; lia.
 (* *)
   subst.
-  replace (d + S i) with (S (d + i)) by omega.
-  rewrite subst_lift; [|omega..].
-  f_equal; omega.
+  replace (d + S i) with (S (d + i)) by lia.
+  rewrite subst_lift; [|lia..].
+  f_equal; lia.
 Qed.
 
 Lemma subst_subst_0 : forall a b bd d, cobj bd CType -> cobj b CType ->
   subst bd d (subst b 0 a) = subst (subst bd d b) 0 (subst bd (1 + d) a).
 Proof.
 intros.
-replace d with (d + 0) by omega.
-rewrite subst_subst; auto; repeat f_equal; omega.
+replace d with (d + 0) by lia.
+rewrite subst_subst; auto; repeat f_equal; lia.
 Qed.
 
 Lemma subst_subst_0_0 : forall a b bd, cobj bd CType -> cobj b CType ->
   subst bd 0 (subst b 0 a) = subst (subst bd 0 b) 0 (subst bd 1 a).
-Proof. intros; rewrite subst_subst_0; auto; repeat f_equal; omega. Qed.
+Proof. intros; rewrite subst_subst_0; auto; repeat f_equal; lia. Qed.
 
 (** ** Judgments *)
 
@@ -621,10 +622,10 @@ Lemma jlift_lift : forall d1 d2 a i j, j >= i ->
   jlift d1 i (jlift d2 j a) = jlift d2 (j + d1) (jlift d1 i a).
 Proof.
 destruct a; simpl; intros;
-repeat (rewrite (lift_lift d1 d2); [|omega]); try reflexivity.
+repeat (rewrite (lift_lift d1 d2); [|lia]); try reflexivity.
 repeat rewrite Hlength_lift.
-repeat (rewrite (lift_lift d1 d2); [|omega]).
-f_equal; f_equal; omega.
+repeat (rewrite (lift_lift d1 d2); [|lia]).
+f_equal; f_equal; lia.
 Qed.
 
 Lemma jlift_lift_0 : forall d1 d2 i j,
@@ -632,16 +633,16 @@ Lemma jlift_lift_0 : forall d1 d2 i j,
 Proof.
 intros.
 pose proof (jlift_lift d1 d2 j 0 i).
-rewrite H; [|omega].
-f_equal; omega.
+rewrite H; [|lia].
+f_equal; lia.
 Qed.
 
 Lemma jlift_fusion : forall d1 d2 i j a,
   j >= i -> j <= d2 + i -> jlift d1 j (jlift d2 i a) = jlift (d1 + d2) i a.
 Proof.
-destruct a; simpl; intros; repeat (rewrite lift_fusion; [|omega..]); try reflexivity.
+destruct a; simpl; intros; repeat (rewrite lift_fusion; [|lia..]); try reflexivity.
 rewrite Hlength_lift.
-repeat (rewrite lift_fusion; [|omega..]).
+repeat (rewrite lift_fusion; [|lia..]).
 reflexivity.
 Qed.
 
@@ -661,13 +662,13 @@ Lemma jlift_subst2 : forall b, cobj b CType ->
   forall d a i j, i >= j ->
   jlift d j (jsubst b i a) = jsubst b (d + i) (jlift d j a).
 Proof.
-destruct a; simpl; intros; repeat (rewrite lift_subst2; [|auto|omega]); try reflexivity.
+destruct a; simpl; intros; repeat (rewrite lift_subst2; [|auto|lia]); try reflexivity.
 rewrite Hlength_lift.
 rewrite Hlength_subst; auto.
-repeat (rewrite lift_subst2; [|auto|omega]).
+repeat (rewrite lift_subst2; [|auto|lia]).
 f_equal.
 f_equal.
-omega.
+lia.
 Qed.
 
 Lemma jlift_subst2_0 : forall a b i, cobj b CType ->
@@ -675,7 +676,7 @@ Lemma jlift_subst2_0 : forall a b i, cobj b CType ->
 Proof.
 intros.
 pose proof (jlift_subst2 b H 1 a i 0) as Hx.
-apply Hx; omega.
+apply Hx; lia.
 Qed.
 
 (** We write [jobj j] when the judgment [j] holds. The formalization

@@ -2,7 +2,7 @@
 
 coq: Makefile.coq
 	touch .depend
-	make -f Makefile.coq depend
+	# make -f Makefile.coq depend
 	make -f Makefile.coq
 
 html: Makefile.coq

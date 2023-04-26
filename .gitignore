@@ -1,0 +1,8 @@
+*.aux
+*.vo
+*.vos
+*.vok
+
+*.cache
+.CoqMakefile.d
+CoqMakefile.conf

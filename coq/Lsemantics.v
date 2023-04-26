@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import Min.
 Require Import List.
 
@@ -6,6 +6,8 @@ Require Import ext.
 Require Import set.
 Require Import minmax.
 Require Import Llanguage.
+
+Require Import Arith.
 
 (** * Semantics of the Lambda Calculus *)
 

@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import String.
 
 Require Import mxx.
@@ -6,6 +6,8 @@ Require Import Llanguage.
 Require Import typesystem.
 Require Import Ltypesystem.
 Require Import typesystemdec.
+
+Require Import Arith.
 
 Open Scope string_scope.
 
@@ -140,13 +142,15 @@ Definition bind {A B} (x : exn A) (f : A -> exn B) :=
   end.
 Notation "x >>= f" := (bind x f) (at level 60, right associativity).
 
+Check existT.
+
 Definition do_cobj f o c : exn (cobj o c) :=
   match get_cobj o with
-    | Some (existT c' co) =>
+    | Some (existT _ c' co) =>
       match class_dec c' c with
         | left Heq => OK (eq_rect c' _ co c Heq)
         | right _ => Err (f (ExpectedGotClass o c c'))
-      end
+        end
     | _ => Err (f (BadSyntax o))
   end.
 
@@ -203,8 +207,8 @@ Inductive optb A : bool -> Type :=
 | Nob : optb A false
 | Yesb : A -> optb A true
 .
-Arguments Nob [A].
-Arguments Yesb [A] _.
+Arguments Nob {A}.
+Arguments Yesb {A} _.
 
 Definition getb {A} (x : optb A true) : A :=
   match x with
@@ -279,7 +283,7 @@ Fixpoint otc b rec H j (o : eobj) : exn (osig b rec H j) :=
     | tVar a, ET =>
       do_cobj (Obj o) H CTEnv >>= fun cH =>
       match get_Hnth H a with
-        | Some (existT k nHak) => OK (ocheck _ (!0 JTVar _ H a k cH nHak) (!0 AT))
+        | Some (existT _ k nHak) => OK (ocheck _ (!0 JTVar _ H a k cH nHak) (!0 AT))
         | _ => Err Impossible
       end
     | tVar _, g => Err (Obj o (ExpectedJEnv g))
@@ -698,7 +702,7 @@ Fixpoint atc z rec H G (a : eterm) : exn (asig z rec H G) :=
   match a with
     | eVar x =>
       match (get_cobj G, get_Gnth G x) with
-        | (Some (existT CAEnv cG), Some (existT t nGxt)) =>
+        | (Some (existT _ CAEnv cG), Some (existT _ t nGxt)) =>
            OK (acheck (Var x) t (!0 JVar _ H G x t cG xS nGxt))
         | _ => Err (Term a Impossible)
       end

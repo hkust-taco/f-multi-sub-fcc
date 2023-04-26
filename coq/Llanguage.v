@@ -1,10 +1,12 @@
-Require Import Omega.
+Require Import Lia.
 Require Import Min.
 Require Import Max.
 
 Require Import set.
 Require Import Flanguage.
 Module F := Flanguage.
+
+Require Import Arith.
 
 (** * Lambda Calculus *)
 
@@ -84,9 +86,9 @@ Ltac subst_lift_var := repeat (match goal with
     | |- context[subst_idx] => unfold subst_idx
     | |- context[lift_idx] => unfold lift_idx
     | |- context[lt_eq_lt_dec ?x ?y] =>
-      destruct (lt_eq_lt_dec x y) as [[?|?]|?]; try (exfalso; omega); simpl; auto
+      destruct (lt_eq_lt_dec x y) as [[?|?]|?]; try (exfalso; lia); simpl; auto
     | |- context[le_gt_dec ?x ?y] =>
-      destruct (le_gt_dec x y); try (exfalso; omega); simpl; auto
+      destruct (le_gt_dec x y); try (exfalso; lia); simpl; auto
   end).
 
 (** We define the [drop] function from indexed terms to lambda terms
@@ -134,7 +136,7 @@ repeat (match goal with
 end); auto.
 (* Var *)
   F.subst_lift_var; unfold subst_idx;
-  destruct (lt_eq_lt_dec x i) as [[?|?]|?]; try (exfalso; omega); auto.
+  destruct (lt_eq_lt_dec x i) as [[?|?]|?]; try (exfalso; lia); auto.
   rewrite drop_lower.
   apply drop_lift.
 Qed.
@@ -609,7 +611,7 @@ Proof. induction a; intros i; simpl; [subst_lift_var|..]; f_equal; auto. Qed.
 Lemma lift_lift : forall a d i j l, lift d (j + l) (lift (i + j) l a) = lift (i + d + j) l a.
 Proof.
 induction a; intros d i j l; simpl; auto; [| |f_equal; auto ..].
-(* Var *) subst_lift_var; f_equal; omega.
+(* Var *) subst_lift_var; f_equal; lia.
 (* Lam *) f_equal; rewrite plus_n_Sm; apply IHa.
 (* Match2 *) rewrite plus_n_Sm; auto.
 (* Match3 *) rewrite plus_n_Sm; auto.
@@ -620,23 +622,23 @@ Lemma lift_subst : forall a b d i j,
 Proof.
 induction a; intros b d i j; simpl; auto; [| |f_equal; auto..].
 (* Var *)
-  subst_lift_var; [|f_equal; omega].
-  replace j with (j + 0) by omega; subst.
+  subst_lift_var; [|f_equal; lia].
+  replace j with (j + 0) by lia; subst.
   rewrite lift_lift.
-  f_equal; omega.
+  f_equal; lia.
 (* Lam *)
-  f_equal; rewrite plus_n_Sm; rewrite IHa; f_equal; omega.
+  f_equal; rewrite plus_n_Sm; rewrite IHa; f_equal; lia.
 (* Match2 *)
-  rewrite plus_n_Sm; rewrite IHa2; f_equal; omega.
+  rewrite plus_n_Sm; rewrite IHa2; f_equal; lia.
 (* Match2 *)
-  rewrite plus_n_Sm; rewrite IHa3; f_equal; omega.
+  rewrite plus_n_Sm; rewrite IHa3; f_equal; lia.
 Qed.
 
 Lemma subst_lift : forall a b d i l,
   subst b (i + l) (lift (d + 1 + i) l a) = lift (d + i) l a.
 Proof.
 induction a; intros b d i l; simpl; auto; [| |f_equal; auto..].
-(* Var *) subst_lift_var; f_equal; omega.
+(* Var *) subst_lift_var; f_equal; lia.
 (* Lam *) f_equal; rewrite plus_n_Sm; rewrite IHa; auto.
 (* Match2 *) rewrite plus_n_Sm; auto.
 (* Match3 *) rewrite plus_n_Sm; auto.
@@ -653,13 +655,13 @@ try solve [f_equal; first [rewrite IHa|rewrite IHa1|rewrite IHa2]; reflexivity].
 (* Var *)
   subst_lift_var.
   (* *)
-    replace (subst bd d) with (subst bd (d + 0)) by (f_equal; omega).
-    rewrite lift_subst; f_equal; omega.
+    replace (subst bd d) with (subst bd (d + 0)) by (f_equal; lia).
+    rewrite lift_subst; f_equal; lia.
   (* *)
-    replace i with (i + 0) by omega.
-    replace x with (d + 1 + i) by omega.
+    replace i with (i + 0) by lia.
+    replace x with (d + 1 + i) by lia.
     rewrite subst_lift.
-    f_equal; omega.
+    f_equal; lia.
 (* Lam *)
   f_equal.
   rewrite plus_n_Sm.
@@ -675,13 +677,13 @@ Lemma subst_subst_0 : forall a b bd d,
   subst bd d (subst b 0 a) = subst (subst bd d b) 0 (subst bd (1 + d) a).
 Proof.
 intros.
-replace d with (d + 0) by omega.
-rewrite subst_subst; repeat f_equal; omega.
+replace d with (d + 0) by lia.
+rewrite subst_subst; repeat f_equal; lia.
 Qed.
 
 Lemma subst_subst_0_0 : forall a b bd,
   subst bd 0 (subst b 0 a) = subst (subst bd 0 b) 0 (subst bd 1 a).
-Proof. intros; rewrite subst_subst_0; repeat f_equal; omega. Qed.
+Proof. intros; rewrite subst_subst_0; repeat f_equal; lia. Qed.
 
 Lemma red_subst : forall a a' b, red a a' -> forall i, red (subst b i a) (subst b i a').
 Proof.

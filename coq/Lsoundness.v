@@ -36,7 +36,7 @@ CoInductive OK a : Prop :=
 *)
 Lemma OKOKstep : forall a, (forall k, OKstep k a) -> OK a.
 Proof.
-cofix.
+cofix OKOKstep.
 intros a Ha.
 apply OK_; [apply (Ha 0)|].
 intros b Hred.

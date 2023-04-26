@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import Min.
 Require Import List.
 
@@ -7,6 +7,7 @@ Require Import set.
 Require Import minmax.
 Require Import Flanguage.
 Require Import Fnormalization.
+Require Import Arith.
 
 (** * Semantics of the Indexed Calculus *)
 
@@ -527,12 +528,12 @@ apply C_.
     intros Hk' b Rb.
     rewrite lower_subst; rewrite <- subst_lower; rewrite <- lower_subst.
     apply (Cdec CS); exists (lower (k - 1) (subst (lower (k' - 1) b) 0 a)).
-    split; [apply Hsub; [omega|]|].
+    split; [apply Hsub; [lia|]|].
     (* 3 *)
       rewrite lower_lower.
-      rewrite Min.min_l; auto; omega.
+      rewrite Min.min_l; auto; lia.
     (* 2 *)
-      apply le_term_lower; [omega|].
+      apply le_term_lower; [lia|].
       apply le_term_subst; [apply binary_fuel_refl|]; auto.
 (* 1: Cred *)
   intros a' [lam [[k [a [Heq [Hok Hsub]]]] Hred]]; subst.
@@ -553,9 +554,9 @@ apply C_.
     exists x; split; auto.
     apply (Cred CS).
     eexists; split; [|eassumption].
-    apply Hsub; [omega|].
+    apply Hsub; [lia|].
     rewrite lower_lower.
-    rewrite Min.min_l; auto; omega.
+    rewrite Min.min_l; auto; lia.
 Qed.
 
 (** The arrow operator builds a type if its return set is a pretype.
@@ -595,7 +596,7 @@ assert (EArr R S a').
   simpl in *; rewrite <- minus_n_O in *.
   rewrite (term_le_lower a k); auto.
   unfold shift in Hsub; rewrite <- (subst_lift_0 a (Var 0 0)).
-  apply Hsub; try omega.
+  apply Hsub; try lia.
   apply R_Var.
   apply CR.
 Qed.
@@ -639,9 +640,9 @@ apply C_.
   split; [reflexivity|split].
   (* 3: Hok *) split; apply Pdec_OK; [exists a|exists b]; split; auto.
   (* 2: Hsub *)
-    intros Hk'; assert (k > 0) as Hk by omega; destruct (Hproj Hk).
+    intros Hk'; assert (k > 0) as Hk by lia; destruct (Hproj Hk).
     split; [apply (Cdec CR); exists (lower (k - 1) a)|apply (Cdec CS); exists (lower (k - 1) b)];
-    split; auto; apply le_term_lower; first [omega|auto].
+    split; auto; apply le_term_lower; first [lia|auto].
 (* 1: Cred *)
   intros a' [pair [[k [a [b [Heq [[Hoka Hokb] Hproj]]]]] Hred]]; subst.
   inversion Hred.
@@ -652,7 +653,7 @@ apply C_.
     (* 4: Hok *)
       split; auto; apply Pred_OK; exists a; split; auto.
     (* 3: Hsub *)
-      intros Hk; assert (1 + k > 0) as Hk' by omega; destruct (Hproj Hk').
+      intros Hk; assert (1 + k > 0) as Hk' by lia; destruct (Hproj Hk').
       destruct k; [inversion Hk|clear Hk]; simpl in *; rewrite <- minus_n_O.
       split; [apply (Cdec CR)|apply (Cdec CS)].
       (* 4: R *)
@@ -667,7 +668,7 @@ apply C_.
     (* 2: Hok *)
       split; auto; apply Pred_OK; exists b; split; auto.
     (* 1: Hsub *)
-      intros Hk; assert (1 + k > 0) as Hk' by omega; destruct (Hproj Hk').
+      intros Hk; assert (1 + k > 0) as Hk' by lia; destruct (Hproj Hk').
       destruct k; [inversion Hk|clear Hk]; simpl in *; rewrite <- minus_n_O.
       split; [apply (Cdec CR)|apply (Cdec CS)].
       (* 2: R *)
@@ -721,15 +722,15 @@ apply C_.
   intros a' [sum [[k [a [[Heq [Hok Hin]]|[Heq [Hok Hin]]]]] lea]]; subst;
   destruct_binary a' lea; rename k0 into k'; exists k'; exists a'; [left|right];
   (split; [reflexivity|split; [apply Pdec_OK; exists a; auto|]]);
-  intros Hk'; assert (k > 0) as Hk by omega;
+  intros Hk'; assert (k > 0) as Hk by lia;
   [apply (Cdec CR)|apply (Cdec CS)]; exists (lower (k - 1) a);
-  split; auto; apply le_term_lower; first [omega|auto].
+  split; auto; apply le_term_lower; first [lia|auto].
 (* 1: Cred *)
   intros a' [sum [[k [a [[Heq [Hok Hin]]|[Heq [Hok Hin]]]]] Hred]]; subst;
   inversion Hred; destruct c; simpl in *; inversion H; clear H; subst;
   rename a'0 into a'; rename k0 into k; exists k; exists a'; [left|right];
   (split; [reflexivity|split; [apply Pred_OK; exists a; auto|]]);
-  intros Hk; assert (1 + k > 0) as Hk' by omega;
+  intros Hk; assert (1 + k > 0) as Hk' by lia;
   (destruct k; [inversion Hk|clear Hk]); simpl in *; rewrite <- minus_n_O;
   [apply (Cdec CR)|apply (Cdec CS)]; pose proof (red_lower _ _ k H0) as [? [? ?]];
   exists x; split; auto; [apply (Cred CR)|apply (Cred CS)]; eexists; eauto.
@@ -853,8 +854,8 @@ apply C_.
   rename k0 into k'; exists k'; exists a'; split; [reflexivity|].
   intros Hk' i Hi.
   apply (Cdec (Cfunc i Hi)).
-  exists (lower (k - 1) a); split; [apply Hfor; omega|].
-  apply le_term_lower; auto; omega.
+  exists (lower (k - 1) a); split; [apply Hfor; lia|].
+  apply le_term_lower; auto; lia.
 (* 1: Cred *)
   intros a' [gen [[k [a [Heq Hfor]]] Hred]]; subst.
   inversion Hred.
@@ -1014,7 +1015,7 @@ Lemma iter_le : forall F X k j, j <= k -> iter F k X = iter F j (iter F (k - j) 
 Proof.
 intros F X k; induction k; intros j Hjk; [inversion Hjk; reflexivity|simpl in *].
 destruct j as [|j]; [reflexivity|].
-rewrite (IHk j); [reflexivity|omega].
+rewrite (IHk j); [reflexivity|lia].
 Qed.
 
 (** *** The mu operator *)
@@ -1072,7 +1073,7 @@ intros R j k jk.
 apply extEq; split; intros a [? ?]; repeat split; auto.
 (* 2 *)
   eapply unary_fuel_1; [|apply H].
-  simpl; intros; omega.
+  simpl; intros; lia.
 (* 1 *)
   destruct H0; auto.
 Qed.
@@ -1175,7 +1176,7 @@ intros; split; intros ? R k.
   destruct k; simpl; auto.
 (* 1 *)
   destruct k; simpl; [apply approx0_eq|].
-  replace (k - 0) with k by omega.
+  replace (k - 0) with k by lia.
   apply H.
 Qed.
 
@@ -1191,7 +1192,7 @@ intros F HF; exists (F EBot); intros R.
 apply approx_eq; intros k.
 rewrite (HF k R k).
 rewrite (HF k EBot k).
-replace (k - k) with 0 by omega.
+replace (k - k) with 0 by lia.
 rewrite approx0_eq with (S := EBot).
 reflexivity.
 Qed.
@@ -1204,14 +1205,14 @@ Proof.
 intros F ij j Hij HF R k.
 rewrite (HF R k).
 rewrite (HF (approx R (k - j)) k).
-rewrite <- (approx_approx R (k - ij) (k - j)); [|omega].
+rewrite <- (approx_approx R (k - ij) (k - j)); [|lia].
 reflexivity.
 Qed.
 
 (** The identity functor is non-expansive.
 *)
 Lemma NE_id : forall F, (forall R, F R = R) -> NE F.
-Proof. intros F H R k; repeat rewrite H; rewrite <- approx_approx; auto; omega. Qed.
+Proof. intros F H R k; repeat rewrite H; rewrite <- approx_approx; auto; lia. Qed.
 
 (** The starting set of the [k]-iteration of a well-founded functor
 [F] does not matter at level [k].
@@ -1223,7 +1224,7 @@ intros F R S k WFF; induction k.
   apply extEq; split; simpl; apply approx0; assumption.
 (* 1+ *)
   rewrite (WFF (iter F k R)); rewrite (WFF (iter F k S)); simpl.
-  replace (k - 0) with k by omega.
+  replace (k - 0) with k by lia.
   rewrite IHk; reflexivity.
 Qed.
 
@@ -1322,7 +1323,7 @@ Lemma Mu_unfold : forall F Bot, WF F -> Inc (Mu Bot F) (F (Mu Bot F)).
 Proof.
 intros F Bot WFF a Ha.
 destruct (term_lt_exists a) as [k ak].
-assert (term_lt a (1 + k)); [eapply unary_fuel_1; [|apply ak]; instantiate; simpl; intros j H; omega|clear ak].
+assert (term_lt a (1 + k)); [eapply unary_fuel_1; [|apply ak]; instantiate; simpl; intros j H; lia|clear ak].
 apply approx_unfold with (k := 1 + k).
 rewrite WFF.
 rewrite Mu_approx_iter; [|assumption].
@@ -1381,7 +1382,7 @@ intros R S k; apply extEq; split; intros a [ak Ha]; split; auto.
   split; destruct ak as [jk ak].
   (* 3 *)
     apply unary_fuel_map_trivial; intros.
-    destruct (lt_dec k0 (j - 1)); [rewrite min_l|rewrite min_r]; omega.
+    destruct (lt_dec k0 (j - 1)); [rewrite min_l|rewrite min_r]; lia.
   (* 2 *)
     apply Hsub; auto.
     apply (Inc_approx R k); auto.
@@ -1393,7 +1394,7 @@ intros R S k; apply extEq; split; intros a [ak Ha]; split; auto.
   apply Hsub; auto.
   split; auto.
   apply unary_fuel_map_trivial; intros.
-  destruct (lt_dec k0 (j - 1)); [rewrite min_l|rewrite min_r]; omega.
+  destruct (lt_dec k0 (j - 1)); [rewrite min_l|rewrite min_r]; lia.
 Qed.
 
 Lemma WF_EArr : forall R S k,
@@ -1429,11 +1430,11 @@ intros R S k; apply extEq; split; intros a [ak Ha]; split; auto.
   (* 3: R *)
     split; destruct ak as [jk [ak bk]]; [|apply Hproj; auto].
     apply unary_fuel_map_trivial; intros.
-    destruct (lt_dec k0 (j - 1)); [rewrite min_l|rewrite min_r]; omega.
+    destruct (lt_dec k0 (j - 1)); [rewrite min_l|rewrite min_r]; lia.
   (* 2: S *)
     split; destruct ak as [jk [ak bk]]; [|apply Hproj; auto].
     apply unary_fuel_map_trivial; intros.
-    destruct (lt_dec k0 (j - 1)); [rewrite min_l|rewrite min_r]; omega.
+    destruct (lt_dec k0 (j - 1)); [rewrite min_l|rewrite min_r]; lia.
 (* 1: <- *)
   generalize ak Ha; clear ak Ha; induction_red a; intros ak Ha.
   destruct Ha as [j [a' [b' [Heq [Hok Hproj]]]]].
@@ -1473,7 +1474,7 @@ intros R S k; apply extEq; split; intros a [ak Ha]; split; auto.
   rename a into sum, a' into a; exists j, a; [left|right];
   (split; [|split]); auto; subst sum; intros Hj; split; auto;
   destruct ak as [jk ak]; apply unary_fuel_map_trivial; intros;
-  (destruct (lt_dec k0 (j - 1)); [rewrite min_l|rewrite min_r]); omega.
+  (destruct (lt_dec k0 (j - 1)); [rewrite min_l|rewrite min_r]); lia.
 (* 1: <- *)
   generalize ak Ha; clear ak Ha; induction_red a; intros ak Ha;
   destruct Ha as [j [a' [[Heq [Hok Hin]]|[Heq [Hok Hin]]]]];
@@ -1514,7 +1515,7 @@ intros I cond func k; apply extEq; split; intros a [ak Ha]; split; auto.
   destruct ak as [jk ak].
   split; [|apply Hpi; auto].
   apply unary_fuel_map_trivial; intros.
-  destruct (lt_dec k0 (j - 1)); [rewrite min_l|rewrite min_r]; omega.
+  destruct (lt_dec k0 (j - 1)); [rewrite min_l|rewrite min_r]; lia.
 (* <- *)
   destruct Ha as [j [a' [Heq Hpi]]].
   rename a into gen, a' into a; exists j; exists a; split; auto.
@@ -1620,14 +1621,14 @@ Proof.
 intros F R jk k HF.
 destruct (le_gt_dec jk k).
 (* 2 *)
-  replace (jk - k) with 0 in HF by omega.
+  replace (jk - k) with 0 in HF by lia.
   rewrite HF.
   rewrite (HF (approx R k)).
-  replace (jk - 0) with jk by omega.
+  replace (jk - 0) with jk by lia.
   rewrite (approx_approx R jk k); auto.
 (* 1 *)
   rewrite HF.
-  replace (jk - (jk - k)) with k by omega.
+  replace (jk - (jk - k)) with k by lia.
   reflexivity.
 Qed.
 
@@ -1643,20 +1644,20 @@ assert (forall i,
 induction k; intros i; [apply approx0_eq|].
 destruct (le_gt_dec j k).
 (* 2: j <= k *)
-  replace (i + (S k - j)) with (1 + i + (k - j)) by omega.
+  replace (i + (S k - j)) with (1 + i + (k - j)) by lia.
   simpl; rewrite HX; simpl.
   rewrite IHk with (1 + i); simpl.
   rewrite <- HX; simpl.
   apply (WFj_min (fun X => F X _) R).
-  apply WFj_dec with j; auto; omega.
+  apply WFj_dec with j; auto; lia.
 (* 1 *)
-  replace (i + (S k - j)) with i by omega.
+  replace (i + (S k - j)) with i by lia.
   simpl; rewrite HX; simpl.
   rewrite IHk with i.
-  replace (i + (k - j)) with i by omega.
+  replace (i + (k - j)) with i by lia.
   rewrite <- HX; simpl.
   apply (WFj_min (fun X => F X _) R).
-  apply WFj_dec with j; auto; omega.
+  apply WFj_dec with j; auto; lia.
 Qed.
 
 (** ** Semantic judgment
@@ -1843,7 +1844,7 @@ induction G as [|R0 G]; intros R S k a b CR CS Ha Hb; simpl in *.
         inversion H; clear H; subst; simpl in *.
         rewrite <- minus_n_O in H1.
         apply (CEdec CS); auto.
-        exists (lower k0 (subst b 0 x0)); split; [apply H1; auto; [omega|]|].
+        exists (lower k0 (subst b 0 x0)); split; [apply H1; auto; [lia|]|].
         (* 4 *)
           apply (Cdec CR).
           exists b; split; auto.
@@ -1916,7 +1917,7 @@ induction G as [|R0 G]; intros R S k a CR CS Ha; simpl in *.
         inversion H; clear H; subst; simpl in *.
         rewrite <- minus_n_O in H1.
         apply (CEdec CR); auto.
-        exists (lower k0 x0); split; [apply H1; auto; omega|].
+        exists (lower k0 x0); split; [apply H1; auto; lia|].
         apply le_term_lower; [|apply binary_fuel_refl; auto]; minmax.
       (* Exp *)
         destruct Expa as [[? ?] ?]; inversion H.
@@ -1956,7 +1957,7 @@ induction G as [|R0 G]; intros R S k a CR CS Ha; simpl in *.
         inversion H; clear H; subst; simpl in *.
         rewrite <- minus_n_O in H1.
         apply (CEdec CS); auto.
-        exists (lower k0 x1); split; [apply H1; auto; omega|].
+        exists (lower k0 x1); split; [apply H1; auto; lia|].
         apply le_term_lower; [|apply binary_fuel_refl; auto]; minmax.
       (* Exp *)
         destruct Expa as [[? ?] ?]; inversion H.
@@ -2070,7 +2071,7 @@ induction G as [|R0 G]; intros Rl Rr S k a bl br CRl CRr CS Ha Hbl Hbr; simpl in
         inversion Heq; clear Heq; subst; simpl in *.
         rewrite <- minus_n_O in Hin.
         apply (CEdec CS); auto.
-        exists (subst (lower k0 a) 0 bl); split; [apply Hbl; apply Hin; omega|].
+        exists (subst (lower k0 a) 0 bl); split; [apply Hbl; apply Hin; lia|].
         rewrite lower_subst. rewrite <- subst_lower.
         apply le_term_subst; [apply le_term_lower; [|apply binary_fuel_refl; auto]; minmax|].
         apply le_term_lower_trivial.
@@ -2085,7 +2086,7 @@ induction G as [|R0 G]; intros Rl Rr S k a bl br CRl CRr CS Ha Hbl Hbr; simpl in
         inversion Heq; clear Heq; subst; simpl in *.
         rewrite <- minus_n_O in Hin.
         apply (CEdec CS); auto.
-        exists (subst (lower k0 a) 0 br); split; [apply Hbr; apply Hin; omega|].
+        exists (subst (lower k0 a) 0 br); split; [apply Hbr; apply Hin; lia|].
         rewrite lower_subst. rewrite <- subst_lower.
         apply le_term_subst; [apply le_term_lower; [|apply binary_fuel_refl; auto]; minmax|].
         apply le_term_lower_trivial.
@@ -2163,7 +2164,7 @@ induction G as [|R0 G]; intros k a Cfunc Ha i H; simpl in *.
         inversion H0; clear H0; subst; simpl in *.
         rewrite <- minus_n_O in H1.
         apply (CEdec (Cfunc i H)); auto.
-        exists (lower k0 x0); split; [apply H1; omega|].
+        exists (lower k0 x0); split; [apply H1; lia|].
         apply le_term_lower; [|apply binary_fuel_refl; auto]; minmax.
       (* 2: Exp *)
         destruct Expa as [[? ?] ?].

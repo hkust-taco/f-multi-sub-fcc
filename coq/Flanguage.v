@@ -1,9 +1,10 @@
-Require Import Omega.
+Require Import Lia.
 Require Import Min.
 Require Import Max.
 
 Require Import set.
 Require Import minmax.
+Require Import Arith.
 
 (** * Indexed Calculus *)
 
@@ -182,8 +183,8 @@ Hint Unfold subst_idx subst.
 Ltac subst_lift_var := repeat (match goal with
     | |- context[subst_idx] => unfold subst_idx
     | |- context[lift_idx] => unfold lift_idx
-    | |- context[lt_eq_lt_dec ?x ?y] => destruct (lt_eq_lt_dec x y) as [[?|?]|?]; try (exfalso; omega); simpl; auto
-    | |- context[le_gt_dec ?x ?y] => destruct (le_gt_dec x y); try (exfalso; omega); simpl; auto
+    | |- context[lt_eq_lt_dec ?x ?y] => destruct (lt_eq_lt_dec x y) as [[?|?]|?]; try (exfalso; lia); simpl; auto
+    | |- context[le_gt_dec ?x ?y] => destruct (le_gt_dec x y); try (exfalso; lia); simpl; auto
   end).
 
 Definition set := @set term.
@@ -642,7 +643,7 @@ Qed.
 Lemma lift_lift : forall a d i j l, lift d (j + l) (lift (i + j) l a) = lift (i + d + j) l a.
 Proof.
 induction a; intros d i j l; simpl; auto; [| |f_equal; auto ..].
-(* Var *) subst_lift_var; f_equal; omega.
+(* Var *) subst_lift_var; f_equal; lia.
 (* Lam *) f_equal; rewrite plus_n_Sm; apply IHa.
 (* Match2 *) rewrite plus_n_Sm; auto.
 (* Match3 *) rewrite plus_n_Sm; auto.
@@ -653,24 +654,24 @@ Lemma lift_subst : forall a b d i j,
 Proof.
 induction a; intros b d i j; simpl; auto; [| |f_equal; auto..].
 (* Var *)
-  subst_lift_var; [|f_equal; omega].
+  subst_lift_var; [|f_equal; lia].
   rewrite <- lower_lift; f_equal.
-  replace j with (j + 0) by omega; subst.
+  replace j with (j + 0) by lia; subst.
   rewrite lift_lift.
-  f_equal; omega.
+  f_equal; lia.
 (* Lam *)
-  f_equal; rewrite plus_n_Sm; rewrite IHa; f_equal; omega.
+  f_equal; rewrite plus_n_Sm; rewrite IHa; f_equal; lia.
 (* Match2 *)
-  rewrite plus_n_Sm; rewrite IHa2; f_equal; omega.
+  rewrite plus_n_Sm; rewrite IHa2; f_equal; lia.
 (* Match2 *)
-  rewrite plus_n_Sm; rewrite IHa3; f_equal; omega.
+  rewrite plus_n_Sm; rewrite IHa3; f_equal; lia.
 Qed.
 
 Lemma subst_lift : forall a b d i l,
   subst b (i + l) (lift (d + 1 + i) l a) = lift (d + i) l a.
 Proof.
 induction a; intros b d i l; simpl; auto; [| |f_equal; auto..].
-(* Var *) subst_lift_var; f_equal; omega.
+(* Var *) subst_lift_var; f_equal; lia.
 (* Lam *) f_equal; rewrite plus_n_Sm; rewrite IHa; auto.
 (* Match2 *) rewrite plus_n_Sm; auto.
 (* Match3 *) rewrite plus_n_Sm; auto.
@@ -688,14 +689,14 @@ try solve [f_equal; first [rewrite IHa|rewrite IHa1|rewrite IHa2]; reflexivity].
   subst_lift_var.
   (* *)
     rewrite <- lower_subst; f_equal.
-    replace (subst bd d) with (subst bd (d + 0)) by (f_equal; omega).
-    rewrite lift_subst; f_equal; omega.
+    replace (subst bd d) with (subst bd (d + 0)) by (f_equal; lia).
+    rewrite lift_subst; f_equal; lia.
   (* *)
     rewrite <- lower_subst; f_equal.
-    replace i with (i + 0) by omega.
-    replace x with (d + 1 + i) by omega.
+    replace i with (i + 0) by lia.
+    replace x with (d + 1 + i) by lia.
     rewrite subst_lift.
-    f_equal; omega.
+    f_equal; lia.
 (* Lam *)
   f_equal.
   rewrite plus_n_Sm.
@@ -711,13 +712,13 @@ Lemma subst_subst_0 : forall a b bd d,
   subst bd d (subst b 0 a) = subst (subst bd d b) 0 (subst bd (1 + d) a).
 Proof.
 intros.
-replace d with (d + 0) by omega.
-rewrite subst_subst; repeat f_equal; omega.
+replace d with (d + 0) by lia.
+rewrite subst_subst; repeat f_equal; lia.
 Qed.
 
 Lemma subst_subst_0_0 : forall a b bd,
   subst bd 0 (subst b 0 a) = subst (subst bd 0 b) 0 (subst bd 1 a).
-Proof. intros; rewrite subst_subst_0; repeat f_equal; omega. Qed.
+Proof. intros; rewrite subst_subst_0; repeat f_equal; lia. Qed.
 
 Lemma binary_fuel_map : forall (op : nat -> nat -> Prop) upd' upd,
   (forall k' k, op k' k -> op (upd' k') (upd k)) ->
@@ -738,12 +739,12 @@ Lemma binary_fuel_trans : forall (op : nat -> nat -> Prop),
 Proof.
 intros op H a1.
 induction a1; intros; destruct_binary a2 H0; destruct_binary a3 H1; simpl;
-repeat split; first [omega|eauto].
+repeat split; first [lia|eauto].
 Qed.
 
 Lemma binary_fuel_refl : forall (op : nat -> nat -> Prop),
   (forall k, op k k) -> forall a, binary_fuel op a a.
-Proof. intros op H a; induction a; simpl; try split; first [omega|eauto]. Qed.
+Proof. intros op H a; induction a; simpl; try split; first [lia|eauto]. Qed.
 
 Lemma le_term_lower : forall k' k a' a, k' <= k -> le_term a' a ->
   le_term (lower k' a') (lower k a).
@@ -781,46 +782,46 @@ try match goal with
   | [ H : S _ <= ?k |- _ ] => destruct k; [inversion H|]
 end.
 (* 20: CtxLam *)
-  exists (Lam k0 x); split; [|simpl; repeat split; first [omega|auto]].
+  exists (Lam k0 x); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0 x CtxLam); auto.
 (* 19: CtxApp1 *)
-  exists (App k0 x a0_2); split; [|simpl; repeat split; first [omega|auto]].
+  exists (App k0 x a0_2); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0_1 x (CtxApp1 a0_2)); auto.
 (* 18: CtxApp2 *)
-  exists (App k0 a0_1 x); split; [|simpl; repeat split; first [omega|auto]].
+  exists (App k0 a0_1 x); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0_2 x (CtxApp2 a0_1)); auto.
 (* 17: CtxPair1 *)
-  exists (Pair k0 x a0_2); split; [|simpl; repeat split; first [omega|auto]].
+  exists (Pair k0 x a0_2); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0_1 x (CtxPair1 a0_2)); auto.
 (* 16: CtxPair2 *)
-  exists (Pair k0 a0_1 x); split; [|simpl; repeat split; first [omega|auto]].
+  exists (Pair k0 a0_1 x); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0_2 x (CtxPair2 a0_1)); auto.
 (* 15: CtxFst *)
-  exists (Fst k0 x); split; [|simpl; repeat split; first [omega|auto]].
+  exists (Fst k0 x); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0 x CtxFst); auto.
 (* 14: CtxSnd *)
-  exists (Snd k0 x); split; [|simpl; repeat split; first [omega|auto]].
+  exists (Snd k0 x); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0 x CtxSnd); auto.
 (* 13: CtxAbsurd *)
-  exists (Absurd k0 x); split; [|simpl; repeat split; first [omega|auto]].
+  exists (Absurd k0 x); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0 x CtxAbsurd); auto.
 (* 12: CtxInl *)
-  exists (Inl k0 x); split; [|simpl; repeat split; first [omega|auto]].
+  exists (Inl k0 x); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0 x CtxInl); auto.
 (* 11: CtxInr *)
-  exists (Inr k0 x); split; [|simpl; repeat split; first [omega|auto]].
+  exists (Inr k0 x); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0 x CtxInr); auto.
 (* 10: CtxMatch1 *)
-  exists (Match k0 x a0_2 a0_3); split; [|simpl; repeat split; first [omega|auto]].
+  exists (Match k0 x a0_2 a0_3); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0_1 x (CtxMatch1 a0_2 a0_3)); auto.
 (* 9: CtxMatch2 *)
-  exists (Match k0 a0_1 x a0_3); split; [|simpl; repeat split; first [omega|auto]].
+  exists (Match k0 a0_1 x a0_3); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0_2 x (CtxMatch2 a0_1 a0_3)); auto.
 (* 8: CtxMatch3 *)
-  exists (Match k0 a0_1 a0_2 x); split; [|simpl; repeat split; first [omega|auto]].
+  exists (Match k0 a0_1 a0_2 x); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0_3 x (CtxMatch3 a0_1 a0_2)); auto.
 (* 7: CtxInst *)
-  exists (Inst k0 x); split; [|simpl; repeat split; first [omega|auto]].
+  exists (Inst k0 x); split; [|simpl; repeat split; first [lia|auto]].
   apply (RedCtx k0 a0 x CtxInst); auto.
 (* 6: App *)
   destruct_binary a0_1 H0.
@@ -840,7 +841,7 @@ end.
   destruct k1; [inversion H0|].
   exists (lower (min k0 k1) a0_2).
   split; [apply RedSnd|].
-  apply le_term_lower; [minmax; omega|assumption].
+  apply le_term_lower; [minmax; lia|assumption].
 (* 3: Inl *)
   destruct_binary a0_1 H0.
   destruct k1; [inversion H0|].
@@ -860,21 +861,21 @@ end.
   destruct k1; [inversion H0|].
   exists (lower (min k0 k1) a0).
   split; [apply RedInst|].
-  apply le_term_lower; [minmax; omega|assumption].
+  apply le_term_lower; [minmax; lia|assumption].
 Qed.
 
 Lemma term_ge_dec : forall a k, term_ge a (1 + k) -> term_ge a k.
 Proof.
 intros a k H.
 eapply unary_fuel_1; [|apply H].
-simpl; intros; omega.
+simpl; intros; lia.
 Qed.
 
 Lemma term_ge_lower : forall k k', k' >= k -> forall a, term_ge a k -> term_ge (lower k' a) k.
 Proof.
 intros k k' kk' a H.
 eapply unary_fuel_map; [|apply H].
-intros; apply min_glb; omega.
+intros; apply min_glb; lia.
 Qed.
 
 Lemma unary_fuel_traverse : forall (f : nat -> Prop) g, (forall k x i, f k -> unary_fuel f (g k x i)) ->
@@ -884,7 +885,7 @@ intros f g fg; induction a; intros i H; simpl in *;
 repeat (match goal with
   | H : _ /\ _ |- _ => destruct H
   | |- _ /\ _ => split
-  | |- _ >= _ => omega
+  | |- _ >= _ => lia
 end; auto); auto.
 Qed.
 
@@ -924,7 +925,7 @@ repeat (match goal with
   | H : unary_fuel f ?a |- unary_fuel g ?a => apply unary_fuel_1 with (f := f); [apply Hinc|apply H]
   | H : _ /\ _ |- _ => destruct H
   | |- _ /\ _ => split
-  | |- _ >= _ => omega
+  | |- _ >= _ => lia
 end; auto); auto.
 (* App *)
   apply unary_fuel_map; [|apply unary_fuel_subst]; auto; apply unary_fuel_1 with (f := f); auto.
@@ -941,17 +942,17 @@ Lemma term_ge_red : forall a b k, red a b -> term_ge a (1 + k) -> term_ge b k.
 Proof.
 intros a b k Hred Ha.
 eapply unary_fuel_red; [| | |apply Hred|apply Ha]; intros.
-(* *) simpl in H; omega.
-(* *) simpl in H; omega.
-(* *) apply min_glb; omega.
+(* *) simpl in H; lia.
+(* *) simpl in H; lia.
+(* *) apply min_glb; lia.
 Qed.
 
 Lemma term_le_red : forall a b k, red a b -> term_le a k -> term_le b k.
 Proof.
 intros a b k Hred Ha.
 eapply unary_fuel_red; [| | |apply Hred|apply Ha]; intros.
-(* *) simpl in H; omega.
-(* *) simpl in H; omega.
+(* *) simpl in H; lia.
+(* *) simpl in H; lia.
 (* *) minmax.
 Qed.
 
@@ -969,7 +970,7 @@ Proof.
 intros a b k Hred Ha.
 destruct k; [exfalso; eapply red_0; eauto|].
 eapply unary_fuel_1; [|apply (term_le_red a b k Hred); eapply unary_fuel_1; [|apply Ha]];
-instantiate; simpl; intros j H; omega.
+instantiate; simpl; intros j H; lia.
 Qed.
 
 Lemma red_subst : forall a a' b, red a a' -> forall i, red (subst b i a) (subst b i a').
@@ -1133,7 +1134,7 @@ induction a; repeat (match goal with
   apply term_le_max; rewrite max_comm.
   apply term_le_max; assumption.
 (* 10: Unit *)
-  exists k; simpl; omega.
+  exists k; simpl; lia.
 (* 9: Pair *)
   exists (max k (max x x0)); simpl; split; [|split].
   apply le_max_l.
@@ -1182,7 +1183,7 @@ Proof.
 intros a; destruct (term_le_exists a).
 exists (1 + x).
 eapply unary_fuel_1; [|apply H].
-simpl; intros j ?; omega.
+simpl; intros j ?; lia.
 Qed.
 
 Lemma term_le_min : forall a k j, term_le a j -> term_le a k -> term_le a (min j k).
@@ -1216,19 +1217,19 @@ Qed.
 Lemma le_term_le : forall a b k, le_term a b -> term_le b k -> term_le a k.
 Proof.
 intros a b k ab bk; eapply binary_fuel_unary; [|apply ab|apply bk].
-intros; omega.
+intros; lia.
 Qed.
 
 Lemma le_term_lt : forall a b k, le_term a b -> term_lt b k -> term_lt a k.
 Proof.
 intros a b k ab bk; eapply binary_fuel_unary; [|apply ab|apply bk].
-intros; omega.
+intros; lia.
 Qed.
 
 Lemma lt_term_le : forall a j k, term_lt a j -> j <= k -> term_lt a k.
 Proof.
 intros a j k aj jk; eapply unary_fuel_1; [|apply aj].
-simpl; intros; omega.
+simpl; intros; lia.
 Qed.
 
 Lemma term_lt_0 : forall a, term_lt a 0 -> False.
